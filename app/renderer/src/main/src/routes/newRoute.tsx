@@ -86,7 +86,6 @@ import {
     PrivateSolidWebsocketFuzzerIcon
 } from "./privateIcon"
 import {ControlAdminPage} from "@/pages/dynamicControl/DynamicControl"
-import {PluginDebuggerPage} from "@/pages/pluginDebugger/PluginDebuggerPage"
 import {DebugMonacoEditorPage} from "@/pages/debugMonaco/DebugMonacoEditorPage"
 import {VulinboxManager} from "@/pages/vulinbox/VulinboxManager"
 import {DiagnoseNetworkPage} from "@/pages/diagnoseNetwork/DiagnoseNetworkPage"
@@ -204,8 +203,6 @@ export enum YakitRoute {
     ScreenRecorderPage = "screen-recorder-page",
     // 全局功能-试验性功能-BAS实验室
     DB_ChaosMaker = "db-chaosmaker",
-    // 调试插件的功能
-    Beta_DebugPlugin = "beta-debug-plugin",
     // 调试插件编辑器
     Beta_DebugTrafficAnalize = "**beta-debug-traffic-analize",
     // 调试插件编辑器
@@ -296,7 +293,6 @@ export const YakitRouteToPageInfo: Record<YakitRoute, {label: string; describe?:
     "simple-detect": {label: "安全检测"},
     "screen-recorder-page": {label: "录屏管理"},
     "db-chaosmaker": {label: "BAS实验室"},
-    "beta-debug-plugin": {label: "插件调试"},
     "beta-debug-monaco-editor": {label: "插件编辑器"},
     "beta-vulinbox-manager": {label: "Vulinbox 管理器"},
     "beta-diagnose-network": {label: "网络异常诊断"},
@@ -364,7 +360,6 @@ export const NoPaddingRoute: YakitRoute[] = [
     YakitRoute.DB_CVE,
     YakitRoute.HTTPFuzzer,
     YakitRoute.DB_Ports,
-    YakitRoute.Beta_DebugPlugin,
     YakitRoute.DB_HTTPHistory,
     YakitRoute.Plugin_Audit,
     YakitRoute.AddYakitScript,
@@ -445,14 +440,6 @@ export interface ComponentParams {
     // 数据对比
     leftData?: string
     rightData?: string
-
-    // 插件调试
-    generateYamlTemplate?: boolean
-    YamlContent?: string
-    scriptName?: string
-    // 新建插件
-    moduleType?: string
-    content?: string
 
     // 编辑插件
     editPluginId?: number
@@ -610,14 +597,6 @@ export const RouteToPage: (props: PageItemProps) => ReactNode = (props) => {
             return <ScreenRecorderPage />
         case YakitRoute.DB_ChaosMaker:
             return <ChaosMakerPage />
-        case YakitRoute.Beta_DebugPlugin:
-            return (
-                <PluginDebuggerPage
-                    generateYamlTemplate={!!params?.generateYamlTemplate}
-                    YamlContent={params?.YamlContent || ""}
-                    scriptName={params?.scriptName || ""}
-                />
-            )
         case YakitRoute.Beta_DebugTrafficAnalize:
             return <PcapXDemo />
         case YakitRoute.Beta_DebugMonacoEditor:
