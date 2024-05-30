@@ -260,6 +260,10 @@ service Yak {
   rpc Codec(CodecRequest) returns (CodecResponse);
   rpc NewCodec(CodecRequestFlow) returns (CodecResponse);
   rpc GetAllCodecMethods(Empty) returns(CodecMethods);
+
+  rpc SaveCodecFlow(CustomizeCodecFlow) returns (Empty);
+  rpc DeleteCodecFlow(DeleteCodecFlowRequest) returns (Empty);
+  rpc GetAllCodecFlow(Empty) returns (GetCodecFlowResponse);
   rpc PacketPrettifyHelper(PacketPrettifyHelperRequest) returns (PacketPrettifyHelperResponse);
 
   // Payload 相关接口
@@ -311,7 +315,7 @@ service Yak {
   rpc YaklangLanguageFind(YaklangLanguageSuggestionRequest) returns (YaklangLanguageFindResponse);
   // 从代码中提取yaklang数据
   rpc YaklangInspectInformation(YaklangInspectInformationRequest) returns (YaklangInspectInformationResponse);
-  // 进行数据迁移使用 
+  // 进行数据迁移使用
   rpc YaklangGetCliCodeFromDatabase(YaklangGetCliCodeFromDatabaseRequest) returns (YaklangGetCliCodeFromDatabaseResponse);
 
   // 端口扫描的封装
@@ -322,12 +326,19 @@ service Yak {
   rpc SaveCancelSimpleDetect(RecordPortScanRequest) returns (Empty);
   rpc SimpleDetectCreatReport(CreatReportRequest) returns (stream ExecResult);
 
+  // new interface
+  rpc QuerySimpleDetectUnfinishedTask(QueryUnfinishedTaskRequest) returns (QueryUnfinishedTaskResponse);
+  rpc GetSimpleDetectRecordRequestById(GetUnfinishedTaskDetailByIdRequest) returns (RecordPortScanRequest);
+  rpc DeleteSimpleDetectUnfinishedTask(DeleteUnfinishedTaskRequest) returns (Empty);
+  rpc RecoverSimpleDetectTask(RecoverUnfinishedTaskRequest) returns (stream ExecResult);
+  //----
 
+  // Deprecated interface
   rpc GetSimpleDetectUnfinishedTask(Empty) returns (GetSimpleDetectUnfinishedTaskResponse);
   rpc GetSimpleDetectUnfinishedTaskByUid(GetExecBatchYakScriptUnfinishedTaskByUidRequest) returns (RecordPortScanRequest);
   rpc PopSimpleDetectUnfinishedTaskByUid(GetExecBatchYakScriptUnfinishedTaskByUidRequest) returns (RecordPortScanRequest);
   rpc RecoverSimpleDetectUnfinishedTask(RecoverExecBatchYakScriptUnfinishedTaskRequest) returns (stream ExecResult);
-
+  // ----
 
   // 资产管理
   rpc QueryPorts(QueryPortsRequest) returns (QueryPortsResponse);
@@ -430,6 +441,7 @@ service Yak {
   rpc QueryWebShells(QueryWebShellsRequest) returns (QueryWebShellsResponse);
   rpc Ping(WebShellRequest) returns (WebShellResponse);
   rpc GetBasicInfo(WebShellRequest) returns (WebShellResponse);
+  rpc GenerateWebShell(ShellGenerate) returns(WebShellResponse);
 
   // DNSLog / ICMP / RandomTrigger
   rpc SetYakBridgeLogServer(YakDNSLogBridgeAddr) returns (Empty);
@@ -502,6 +514,7 @@ service Yak {
   rpc DownloadOnlinePlugins(DownloadOnlinePluginsRequest) returns(stream DownloadOnlinePluginProgress);
   rpc DownloadOnlinePluginBatch(DownloadOnlinePluginsRequest) returns (Empty);
   rpc DownloadOnlinePluginByPluginName(DownloadOnlinePluginByScriptNamesRequest) returns (DownloadOnlinePluginByScriptNamesResponse);
+  rpc DownloadOnlinePluginByUUID(DownloadOnlinePluginByUUIDRequest) returns (YakScript);
 
   // 新的扫描模式
   rpc ExecPacketScan(ExecPacketScanRequest) returns (stream ExecResult);
@@ -649,6 +662,10 @@ service Yak {
   rpc GetSpaceEngineStatus(GetSpaceEngineStatusRequest) returns(SpaceEngineStatus);
   rpc GetSpaceEngineAccountStatus(GetSpaceEngineAccountStatusRequest) returns(SpaceEngineStatus);
   rpc FetchPortAssetFromSpaceEngine(FetchPortAssetFromSpaceEngineRequest) returns (stream ExecResult);
+
+  // 表达式执行
+  rpc EvaluateExpression(EvaluateExpressionRequest) returns (EvaluateExpressionResponse);
+
 }
 message GetSpaceEngineAccountStatusRequest {
   string Type = 1;
@@ -787,7 +804,8 @@ message HybridScanRequest {
   bool Control = 9;
   // new: 新任务
   // resume: 恢复任务
-  // pause: 暂停任务 Control:false
+  // pause: 暂停任务
+  // stop: 停止任务
   // status: 查询任务状态
   string HybridScanMode = 8;
   string ResumeTaskId = 1;
@@ -1104,11 +1122,12 @@ message GlobalNetworkConfig {
 
   repeated string ExcludePluginScanURIs = 15;
   repeated string IncludePluginScanURIs = 16;
-  repeated string AiApiPriority = 18;
 
   // AI Primary Config 首选 AI 配置项
   // openai / chatglm
   string PrimaryAIType = 17;
+
+  repeated string AiApiPriority = 18;
 }
 
 message AuthInfo {
@@ -1235,6 +1254,9 @@ message DebugPluginRequest {
 
   // plugin name, if not empty, will use code
   string PluginName = 7;
+
+  // runtime id ,if empty, will create a new runtime
+  string RuntimeId = 8;
 }
 
 message HTTPRequestBuilderResult {
@@ -1941,8 +1963,8 @@ message YaklangLanguageSuggestionResponse {
 }
 
 message YaklangLanguageFindResponse {
-    string URI = 1;
-    repeated Range Ranges = 2;
+  string URI = 1;
+  repeated Range Ranges = 2;
 }
 
 message YaklangInspectInformationResponse {
@@ -1954,9 +1976,9 @@ message YaklangInspectInformationResponse {
 }
 
 message YakUIInfo {
-  string Typ = 1;
-  repeated string Effected = 2;
-  string WhenExpression = 3;
+    string Typ = 1;
+    repeated string Effected = 2;
+    string WhenExpression = 3;
 }
 
 message YakRiskInfo {
@@ -2101,6 +2123,11 @@ message DownloadOnlinePluginByScriptName {
   string HeadImg = 3;
 }
 
+message DownloadOnlinePluginByUUIDRequest {
+  string UUID = 1;
+  string Token = 2;
+}
+
 message OnlineProfile {
   string BaseUrl = 1;
   string Password = 2;
@@ -2145,6 +2172,7 @@ message GetSystemProxyResult {
   bool Enable = 2;
 }
 
+// --- Deprecated interface--
 message GetExecBatchYakScriptUnfinishedTaskByUidRequest {
   string Uid = 1;
 }
@@ -2174,8 +2202,47 @@ message GetExecBatchYakScriptUnfinishedTaskResponse {
   repeated ExecBatchYakScriptUnfinishedTask Tasks = 1;
 }
 
-message    GetSimpleDetectUnfinishedTaskResponse {
+message GetSimpleDetectUnfinishedTaskResponse {
   repeated SimpleDetectUnfinishedTask Tasks = 1;
+}
+// -------------------
+
+message UnfinishedTaskFilter {
+  string RuntimeId = 1;
+  repeated string ProgressSource = 2;
+  string TaskName = 3; // support fuzzy search
+  string Target = 4; // support fuzzy search
+}
+
+message QueryUnfinishedTaskRequest { // query unfinished task list ,just brief info
+  Paging Pagination = 1;
+  UnfinishedTaskFilter Filter = 2;
+}
+
+message DeleteUnfinishedTaskRequest {
+  UnfinishedTaskFilter Filter = 1;
+}
+
+message UnfinishedTask {
+  double Percent = 1;
+  int64 CreatedAt = 2;
+  string RuntimeId = 3;
+  string YakScriptOnlineGroup = 4;
+  string TaskName = 5;
+  int64  LastRecordPtr = 6;
+  string Target = 7;
+}
+
+message QueryUnfinishedTaskResponse { // brief information for unfinished task
+  repeated UnfinishedTask Tasks = 1;
+}
+
+message GetUnfinishedTaskDetailByIdRequest { // get unfinished task detail by runtime id, get task start param or last record
+  string RuntimeId = 1;
+}
+
+message RecoverUnfinishedTaskRequest {// recover unfinished simple detect task by runtime id
+  string RuntimeId = 1;
 }
 
 message FixUploadPacketRequest {
@@ -2590,7 +2657,9 @@ message ExecuteBatchPacketYakScriptParams {
 enum ShellType {
   Behinder = 0;
   Godzilla = 1;
+  YakShell = 2;
 }
+
 enum ShellScript {
   JSP = 0;
   JSPX = 1;
@@ -2626,10 +2695,33 @@ message WebShell {
   int64 UpdatedAt = 15;
   string PacketCodecName = 16;
   string PayloadCodecName = 17;
+  map<string, string> Posts = 18;
+  ShellOptions ShellOptions = 19;
+  string Os = 20;
+  string ResDecMOde = 21; //解密方式
 }
+
+message ShellGenerate{
+  EncMode EncMode = 1;
+  ShellScript Script = 2;
+  string Pass = 3;
+  bool Confuse = 4;  //是否混淆
+  bool IsSession = 5;
+}
+
+message ShellOptions{
+  int64 RetryCount = 1; //重新时间
+  int64 Timeout = 2; //超时时间
+  int64 BlockSize = 3; //分块大小
+  int64 MaxSize = 4; //上传的最大包（M）
+  int64 UpdateTime = 5; //更新时间，当是session-mode的时候涉及到session过期的问题
+  bool IsSession = 6; //是否是session类型
+}
+
 message WebShellRequest {
   int64 Id = 1;
 }
+
 message WebShellResponse {
   bool State = 1;
   bytes Data = 2;
@@ -2656,6 +2748,12 @@ message UpdateWebShellRequest {
   string ShellType = 7;
   string ShellScript = 8;
   string Tag = 10;
+  ShellOptions ShellOptions = 11;
+  string Os = 12;
+  string ResDataMOde = 13;
+  map<string, string> Headers = 14;
+  map<string, string> Posts = 15;
+
 }
 
 message DeleteWebShellRequest {
@@ -3321,6 +3419,7 @@ message RecordPortScanRequest {
   LastRecord LastRecord = 1;
   StartBruteParams StartBruteParams = 3;
   PortScanRequest PortScanRequest = 2;
+  string RuntimeId = 4;
 }
 
 message CreatReportRequest {
@@ -3864,6 +3963,21 @@ message CodecRequestFlow{
   bytes InputBytes = 6;
 }
 
+message CustomizeCodecFlow{
+  string FlowName = 1;
+  repeated CodecWork WorkFlow = 2;
+}
+
+message DeleteCodecFlowRequest {
+  bool DeleteAll = 1;
+  string FlowName = 2;
+}
+
+message GetCodecFlowResponse {
+  repeated CustomizeCodecFlow Flows = 1;
+}
+
+
 message CodecResponse {
   string Result = 1;
   bytes  RawResult = 2;
@@ -4277,7 +4391,7 @@ message FuzzerResponse {
   string TooLargeResponseHeaderFile = 50;
   string TooLargeResponseBodyFile = 51;
   bool DisableRenderStyles = 52;
-  
+
   string RuntimeID = 53;
 }
 
@@ -4935,4 +5049,14 @@ message TraceRouteResponse{
   int64 Rtt = 2;
   string Reason = 3;
   int64 Hop = 4;
+}
+
+message EvaluateExpressionRequest {
+    string Expression = 1;
+    repeated KVPair Variables = 2;
+}
+
+message EvaluateExpressionResponse {
+    string Result = 1; // json marshal
+    bool BoolResult = 2;
 }
