@@ -622,6 +622,9 @@ const HTTPFuzzerPage: React.FC<HTTPFuzzerPageProp> = (props) => {
     const [fuzzerTableMaxData, setFuzzerTableMaxData] = useState<number>(DefFuzzerTableMaxData)
     const fuzzerTableMaxDataRef = useRef<number>(fuzzerTableMaxData)
 
+    const [visibleDrawer, setVisibleDrawer] = useState<boolean>(false)
+    const [pluginDebugCode, setPluginDebugCode] = useState<string>("")
+
     useEffect(() => {
         fuzzerTableMaxDataRef.current = fuzzerTableMaxData
     }, [fuzzerTableMaxData])
@@ -1617,8 +1620,7 @@ const HTTPFuzzerPage: React.FC<HTTPFuzzerPageProp> = (props) => {
                 setCurrentPage(Number(data.Total) + 1)
             })
     })
-    const [visibleDrawer,setVisibleDrawer]=useState<boolean>(false)
-    const [pluginDebugCode,setPluginDebugCode]=useState<string>('')
+
     // 跳转插件调试页面
     const handleSkipPluginDebuggerPage = async (tempType: "path" | "raw") => {
         const requests = getFuzzerRequestParams()
@@ -2036,6 +2038,7 @@ const HTTPFuzzerPage: React.FC<HTTPFuzzerPageProp> = (props) => {
                 )}
                 <React.Suspense fallback={<>loading...</>}>
                     <PluginDebugDrawer
+                        getContainer={fuzzerRef.current}
                         route={YakitRoute.HTTPFuzzer}
                         defaultCode={pluginDebugCode}
                         visible={visibleDrawer}
