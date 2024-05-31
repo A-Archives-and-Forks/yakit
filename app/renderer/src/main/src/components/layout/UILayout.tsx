@@ -647,27 +647,29 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
     // kill完引擎进程后开始更新指定Yaklang版本引擎
     const downYaklangSpecifyVersion = (res: string) => {
         try {
-            const {version, isUpdate = true} = JSON.parse(res) || {}
+            const {version, killPssText = {}} = JSON.parse(res) || {}
             setYaklangSpecifyVersion(version)
             setYaklangKillPssText({
-                title: !isUpdate ? "替换引擎，需关闭所有本地进程" : "更新引擎，需关闭所有本地进程",
-                content: !isUpdate
-                    ? "确认下载并安装此版本引擎，将会关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
-                    : "关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
+                title: killPssText.title || "更新引擎，需关闭所有本地进程",
+                content: killPssText.content || "关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
             })
             handleActiveDownloadModal("yaklang")
-        } catch (error) {
-        }
+        } catch (error) {}
     }
 
     // 使用官方引擎 - 下载最新引擎
     const useOfficialEngineByDownload = () => {
-        setYaklangSpecifyVersion(yaklangLastVersion)
-        setYaklangKillPssText({
-            title: "使用官方引擎，需关闭所有本地进程",
-            content: "确认下载并安装官方引擎，将会关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
-        })
-        handleActiveDownloadModal("yaklang")
+        emiter.emit(
+            "downYaklangSpecifyVersion",
+            JSON.stringify({
+                version: yaklangLastVersion,
+                killPssText: {
+                    title: "使用官方引擎，需关闭所有本地进程",
+                    content:
+                        "确认下载并安装官方引擎，将会关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
+                }
+            })
+        )
     }
 
     // 使用官方引擎 - 内置引擎
@@ -827,7 +829,7 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
     const onCheckVersionCancel = useMemoizedFn((flag: boolean) => {
         if (flag) {
             if (yaklangKillPss) return
-            emiter.emit("downYaklangSpecifyVersion", JSON.stringify({version: yaklangLastVersion, isUpdate: true}))
+            emiter.emit("downYaklangSpecifyVersion", JSON.stringify({version: yaklangLastVersion}))
         }
         setCurrentVersion("")
     })

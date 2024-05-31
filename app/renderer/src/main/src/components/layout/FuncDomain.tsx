@@ -1406,7 +1406,17 @@ const MoreYaklangVersion: React.FC<MoreYaklangVersionProps> = React.memo((props)
 
     const versionListItemClick = (version: string) => {
         onClosePop(false)
-        emiter.emit("downYaklangSpecifyVersion", JSON.stringify({version, isUpdate: false}))
+        emiter.emit(
+            "downYaklangSpecifyVersion",
+            JSON.stringify({
+                version,
+                killPssText: {
+                    title: "替换引擎，需关闭所有本地进程",
+                    content:
+                        "确认下载并安装此版本引擎，将会关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
+                }
+            })
+        )
     }
 
     return (
@@ -1691,7 +1701,7 @@ const UIOpNotice: React.FC<UIOpNoticeProp> = React.memo((props) => {
     useEffect(() => {
         if (isEngineLink) {
             ipcRenderer.on("fetch-yak-version-callback", async (e: any, data: string) => {
-                console.log('本地引擎版本号：', data);
+                console.log("本地引擎版本号：", data)
                 setYaklangVersion(data || "dev")
             })
         }
@@ -1751,7 +1761,7 @@ const UIOpNotice: React.FC<UIOpNoticeProp> = React.memo((props) => {
         if (type === "yakit") {
             emiter.emit("activeUpdateYakitOrYaklang", type)
         } else {
-            emiter.emit("downYaklangSpecifyVersion", JSON.stringify({version: yaklangLastVersion, isUpdate: true}))
+            emiter.emit("downYaklangSpecifyVersion", JSON.stringify({version: yaklangLastVersion}))
         }
     })
 
