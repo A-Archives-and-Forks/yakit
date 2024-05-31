@@ -987,6 +987,24 @@ export const apiFetchOnlinePluginInfo: (uuid: string, isShowError?: boolean) => 
     })
 }
 
+/**
+ * @name 获取指定插件的详情(本地)
+ */
+export const apiFetchLocalPluginInfo: (scriptName: string, isShowError?: boolean) => Promise<YakScript> = (
+    scriptName,
+    isShowError
+) => {
+    return new Promise((resolve, reject) => {
+        ipcRenderer
+            .invoke("GetYakScriptByName", {Name: scriptName})
+            .then(resolve)
+            .catch((e) => {
+                if (isShowError !== false) yakitNotify("error", "查询本地插件错误:" + e)
+                reject(e)
+            })
+    })
+}
+
 export interface PluginLogsRequest extends HTTPRequestParameters, API.LogsRequest {}
 /**
  * @name 获取插件的日志

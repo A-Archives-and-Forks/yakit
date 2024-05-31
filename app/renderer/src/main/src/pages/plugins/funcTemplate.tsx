@@ -403,6 +403,7 @@ export const FuncFilterPopover: React.FC<FuncFilterPopoverProps> = memo((props) 
             placement={placement}
             onVisibleChange={setShow}
             disabled={disabled}
+            trigger={["click"]}
         >
             {nameAndIcon ? (
                 <YakitButton
