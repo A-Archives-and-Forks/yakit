@@ -659,8 +659,7 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
 
     // 使用官方引擎 - 下载最新引擎
     const useOfficialEngineByDownload = () => {
-        emiter.emit(
-            "downYaklangSpecifyVersion",
+        downYaklangSpecifyVersion(
             JSON.stringify({
                 version: yaklangLastVersion,
                 killPssText: {
