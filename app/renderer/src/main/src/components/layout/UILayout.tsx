@@ -289,7 +289,7 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
     }, [])
 
     /** 校验版本有问题 没有内置版本则 安装最新引擎 **/
-    const [onlyInstallLatestEngine, setOnlyInstallLatestEngine] = useState<boolean>(false) // 只走安装步骤
+    const [onlyInstallLatestEngine, setOnlyInstallLatestEngine] = useState<boolean>(false)
     const checkEngineDownloadLatestVersion = () => {
         setOnlyInstallLatestEngine(true)
         onSetYakitStatus("install")
@@ -662,18 +662,13 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
 
     // 使用官方引擎 - 下载最新引擎
     const useOfficialEngineByDownload = () => {
+        setYaklangSpecifyVersion(yaklangLastVersion)
         setYaklangKillPssText({
             title: "使用官方引擎，需关闭所有本地进程",
             content: "确认下载并安装官方引擎，将会关闭所有引擎，包括正在连接的本地引擎进程，同时页面将进入加载页。"
         })
         handleActiveDownloadModal("yaklang")
     }
-    useEffect(() => {
-        emiter.on("useOfficialEngineByDownload", useOfficialEngineByDownload)
-        return () => {
-            emiter.off("useOfficialEngineByDownload", useOfficialEngineByDownload)
-        }
-    }, [])
 
     // 使用官方引擎 - 内置引擎
     const useOfficialEngineByDownloadByBuiltIn = () => {
@@ -684,12 +679,6 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
         })
         handleActiveDownloadModal("yaklang")
     }
-    useEffect(() => {
-        emiter.on("useOfficialEngineByDownloadByBuiltIn", useOfficialEngineByDownloadByBuiltIn)
-        return () => {
-            emiter.off("useOfficialEngineByDownloadByBuiltIn", useOfficialEngineByDownloadByBuiltIn)
-        }
-    }, [])
     const onDownloadedYaklang = useMemoizedFn(() => {
         setYaklangSpecifyVersion("")
         setYaklangDownload(false)
@@ -765,12 +754,16 @@ const UILayout: React.FC<UILayoutProp> = (props) => {
     })
 
     useEffect(() => {
+        emiter.on("useOfficialEngineByDownloadByBuiltIn", useOfficialEngineByDownloadByBuiltIn)
+        emiter.on("useOfficialEngineByDownload", useOfficialEngineByDownload)
         emiter.on("downYaklangSpecifyVersion", downYaklangSpecifyVersion)
         emiter.on("activeUpdateYakitOrYaklang", handleActiveDownloadModal)
         ipcRenderer.on("kill-old-engine-process-callback", () => {
             setKillOldEngine(true)
         })
         return () => {
+            emiter.off("useOfficialEngineByDownloadByBuiltIn", useOfficialEngineByDownloadByBuiltIn)
+            emiter.off("useOfficialEngineByDownload", useOfficialEngineByDownload)
             emiter.off("downYaklangSpecifyVersion", downYaklangSpecifyVersion)
             emiter.off("activeUpdateYakitOrYaklang", handleActiveDownloadModal)
             ipcRenderer.removeAllListeners("kill-old-engine-process-callback")

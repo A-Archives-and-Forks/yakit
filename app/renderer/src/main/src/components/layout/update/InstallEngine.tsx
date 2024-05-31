@@ -152,7 +152,7 @@ export const InstallEngine: React.FC<InstallEngineProps> = React.memo((props) =>
         {wait: 500}
     )
 
-    const [install, setInstall] = useState<boolean>(onlyInstallLatestEngine)
+    const [install, setInstall] = useState<boolean>(false)
     useEffect(() => {
         if (onlyInstallLatestEngine) {
             installEngine()
